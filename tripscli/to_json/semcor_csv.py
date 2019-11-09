@@ -45,5 +45,6 @@ def get_spans(sentence, add_wn=False):
     return spans 
 
 def read_csv_semcor(fname, add_wn=True, entries=simple_it):
-    f = OMSTIFile(FLAGS.input)
+    f = OMSTIFile(fname)
     return ({"sentence": " ".join([clean(x.word) for x in s]), "input_tags" : get_spans(s, add_wn)} for s in entries(f))
+

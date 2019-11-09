@@ -1,5 +1,4 @@
 import json
-import spacy
 
 from itertools import islice
 
