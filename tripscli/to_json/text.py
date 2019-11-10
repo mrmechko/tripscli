@@ -21,7 +21,7 @@ def token_to_json(token, sid=None, gold=None, lftype=None):
     lex = str(token)
     pos = str(token.pos_)
     res = dict(start=start, end=end, lex=lex, pos=pos, sid=sid, gold=gold, lftype=lftype)
-    return {k: v for k, v in res.items() if v}
+    return {k: v for k, v in res.items() if v or v == 0}
 
 def sentence_to_json(text, nlp):
     """convert text into a json object using a spacy instance"""
