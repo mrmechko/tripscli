@@ -27,7 +27,7 @@ def get_from_vagrant(vagrant):
 @click.option("--input-file", "-i", "input_file", prompt=True) #make this safe
 @click.option("--input-type", "-t", "input_type", prompt=True, default="plain", type=click.Choice(['plain', 'story'])) 
 @click.option("--output-dir", "-o", "output_file", prompt=True) #make this safe
-@click.option("--hinting", "-h", "hinting", default="both", type=click.Choice(["none", "pre", "prog", "both"]), prompt=True) 
+@click.option("--hinting", "-h", "hinting", default="both", type=click.Choice(["plain", "pre", "prog", "both"]), prompt=True) 
 @click.option("--sense-tags", "-g", "tags", default="wordnet", type=click.Choice(["wordnet", "gold"]))
 @click.option("--sense-pruning", "-p", "pruning", default="nbest", prompt=True, type=click.Choice(modifier_names))
 @click.option("--pos-include", "-x", "pos_include", default="", prompt=True, help="comma separated pos tags to include.  Leave empty to allow all tags")
@@ -71,9 +71,10 @@ def parse(input_file, input_type, output_file, hinting, tags, pruning, pos_inclu
         ctr = 0
         for i, f in enumerate(files):
             data = _json(f)
-            for d in data:
-                outp = output_file, "sentence_{:>03d}.json".format(ctr)
-                if os.path.join(outp):
+            for d in tqdm(data):
+                outp = os.path.join(output_file, "sentence_{:>03d}.json".format(ctr))
+                ctr += 1
+                if os.path.isfile(outp):
                     continue
                 parse = parse_sentence(d, options, debug)
                 parse["configuration"] = options

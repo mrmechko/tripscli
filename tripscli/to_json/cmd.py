@@ -22,22 +22,26 @@ def get_splice(descr):
 @click.command()
 @click.option("--splice", default="", type=str, help="a ds splice file to fix random cuts")
 @click.option("--input-file", "-i", "input_file", prompt=True) #make this safe
+@click.option("--extension", "-e", "extension", prompt=True, default="csv")
 @click.option("--input-type", "-t", "input_type", prompt=True, default="text", type=click.Choice(['text', 'story', 'semcor'])) 
 @click.option("--output-file", "-o", "output_file", prompt=True) #make this safe
 @click.option("--spacy", "-s", "spacy_model", default="en_core_web_sm", prompt=True) #make this safe
 @click_config_file.configuration_option(implicit=False, provider=json_config_provider)
-@click_config_file.configuration_option(implicit=False, provider=json_config_provider, cmd_name="splice")
-def to_json(splice, input_file, input_type, output_file, spacy_model):
+#@click_config_file.configuration_option(implicit=False, provider=json_config_provider, cmd_name="splice")
+def to_json(splice, input_file, extension, input_type, output_file, spacy_model):
     splice = get_splice(splice)
-    files = ls(input_file)
+    files = [f for f in ls(input_file) if f.endswith(extension)]
     click.secho("reading files: {}".format(",".join(files)), color='blue')
     if not files:
         raise click.FileError(input_file, "Provide a single input file or a directory containing multiple files.")
 
     if input_type == "semcor": # don't need nlp. do the thing and return
-        data = sum([sum(list(read_csv_semcor(f, entries=lambda x: tqdm(splice(x))) for f in files), [])], [])
+        data = (read_csv_semcor(f, entries=lambda x: tqdm(splice(x))) for f in files)
+        result = []
+        for d in data:
+            result.extend(list(d))
         with open(output_file, 'w') as output:
-            json.dump(data, output, indent=2)
+            json.dump(result, output, indent=2)
     elif input_type == "story":
         nlp = spacy.load(spacy_model)
         if not os.path.isdir(output_file):

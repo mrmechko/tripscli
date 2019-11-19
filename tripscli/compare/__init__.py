@@ -1,1 +1,1 @@
-from .cmd import simple
+from .cmd import simple, compare, compare_parse

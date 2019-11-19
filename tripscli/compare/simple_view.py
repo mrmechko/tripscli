@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict as ddict
 
 def get_nodes_only(p):
     x = {}
@@ -43,4 +44,20 @@ def view(sentence):
         ptr = stop
     return final
 
+def as_key_val(a):
+    return ("%s (%d, %d)" % a[1:]), a[0]
 
+def compare_taggings(parse1, parse2):
+    sentence = parse1["sentence"]
+    parse1 = tagged(parse1)
+    parse2 = tagged(parse2)
+
+    res = ddict(lambda: ([], []))
+    for x in parse1:
+        a, b = as_key_val(x)
+        res[a][0].append(b)
+    for x in parse2:
+        a, b = as_key_val(x)
+        res[a][1].append(b)
+    
+    return {"sentence": sentence, "tags": res}

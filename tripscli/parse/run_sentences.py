@@ -9,6 +9,8 @@ from pytrips.ontology import get_ontology as ont
 EXCLUDE = ["wordnet", "gold"]
 TripsOptions = namedtuple("TripsConnection", "tmp,url,sensetags,hinting,sense_pruning,pos_include".split(","))
 
+def clean_word(word):
+    return word.replace(" ", "-")
 
 def nbest(senses, n=3):
     return {a: b for a, b in sorted(list(senses.items()), key = lambda x: -x[1])[:n]}
@@ -61,7 +63,8 @@ def parse_sentence(entry, options, debug):
     cleaned_tags = []
     exclude = [e for e in EXCLUDE if e != options.sensetags]
     for i in entry["input_tags"]:
-        if options.pos_include and i["pos"].lower() not in options.pos_include:
+        i['lex'] = clean_word(i['lex'])
+        if options.pos_include and "pos" in i and i["pos"].lower() not in options.pos_include:
             continue
         if not options.sensetags == "gold" and "senses" in i:
             i["senses"] = MOD[options.sense_pruning](i["senses"])

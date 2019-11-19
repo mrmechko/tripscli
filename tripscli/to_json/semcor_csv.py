@@ -36,7 +36,7 @@ def get_spans(sentence, add_wn=False):
         word = clean(s.word)
         if "%" in s.tag:
             lex = wn.lemma_from_key(s.tag.split()[0]).name()
-            rtag = ["ont::"+x.name for x in get_ontology().get_wordnet(s.tag.split()[0], max_depth=FLAGS.m)]
+            rtag = ["ont::"+x.name for x in get_ontology().get_wordnet(s.tag.split()[0], max_depth=3)]
         this = {"start": start, "end": start+len(word), "lex": word, "lftype": rtag, "sid": s.sid}
         if add_wn:
             this["gold"] = s.tag.split()
