@@ -34,9 +34,10 @@ def get_from_vagrant(vagrant):
 @click.option("--vagrant-home", "-v", "vagrant", default="", prompt=True)
 @click.option("--tempfile", "-e", "temp", default="")
 @click.option("--trips-url", "-u", "url", default="http://localhost:8081/cgi/STEP")
-@click.option("--debug", "-d", "debug", default=False)
+@click.option("--debug", "-d", "debug", is_flag=True)
+@click.option("--as_xml", "-b", "as_xml", is_flag=True, help="return xml data for a parse instead")
 @click_config_file.configuration_option(implicit=False, provider=json_config_provider)
-def parse(input_file, input_type, output_file, hinting, tags, pruning, pos_include, vagrant, temp, url, debug):
+def parse(input_file, input_type, output_file, hinting, tags, pruning, pos_include, vagrant, temp, url, debug, as_xml):
     output_to_dir = os.path.isdir(output_file)
     if not output_to_dir:
         raise click.BadArgumentUsage("--output-dir expected a directory")
@@ -55,11 +56,20 @@ def parse(input_file, input_type, output_file, hinting, tags, pruning, pos_inclu
         url_ = url
     if not url_:
         raise click.BadOptionUsage("Wasn't given a url and couldn't figure one out from a vagrant config")
+    if not pos_include.strip():
+        pos_include = []
+    else:
+        pos_include = pos_include.strip().split(",")
 
-    options = TripsOptions(temp_, url_, tags, hinting, pruning, pos_include.split(","))
+    options = TripsOptions(temp_, url_, tags, hinting, pruning, pos_include, as_xml)
     click.echo(str(options))
+    output_style = 'json'
+    if as_xml:
+        output_style = 'xml'
 
     if input_type == "story":
+        if as_xml:
+            raise ValueError("story parsing currently doesn't support xml.  It is a quick fix that I haven't gotten around to yet")
         out = lambda x: x.replace(input_file, output_file)
         for f in files:
             if not os.path.isfile(out(f)):
@@ -72,12 +82,16 @@ def parse(input_file, input_type, output_file, hinting, tags, pruning, pos_inclu
         for i, f in enumerate(files):
             data = _json(f)
             for d in tqdm(data):
-                outp = os.path.join(output_file, "sentence_{:>03d}.json".format(ctr))
+                outp = os.path.join(output_file, "sentence_{:>03d}.{}".format(ctr, output_style))
                 ctr += 1
                 if os.path.isfile(outp):
                     continue
                 parse = parse_sentence(d, options, debug)
-                parse["configuration"] = options
-                dump_json(parse, outp)
+                if as_xml:
+                    with open(outp, 'w') as outfile:
+                        outfile.write(parse)
+                else:
+                    parse["configuration"] = options
+                    dump_json(parse, outp)
 
 

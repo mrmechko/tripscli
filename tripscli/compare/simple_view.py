@@ -9,12 +9,24 @@ def get_nodes_only(p):
                 x[key] = val
     return x
 
-def tagged(sentence):
-    parse = get_nodes_only(sentence["parse"])
+def tagged(sentence, sup=False):
+    if sup:
+        parse = sentence["input_tags"]
+    else:
+        parse = get_nodes_only(sentence["parse"]).values()
     text = " "+sentence["sentence"].lower() + " "
     new_sent = []
-    for key, node in parse.items():
-        word = node.get("roles", {}).get("LEX", "++NONE++").lower()
+    for node in parse:
+        if sup:
+            word = node["lex"]
+            ntype = node.get("senses", {"NOTA": 1})
+            if ntype:
+                ntype = max(ntype.items(), key=lambda x: x[1])[0]
+            else:
+                ntype = "NOTA"
+        else:
+            word = node.get("roles", {}).get("LEX", "++NONE++").lower()
+            ntype = node["type"]
         if word == "++none++":
             continue
         query = re.findall("[^\w]%s[^\w]" % word, text)
@@ -24,8 +36,8 @@ def tagged(sentence):
             print(word, "has multiple matches")
             continue
         ind = text.find(query[0])
-        if ind and not node["type"].startswith("SA_"):
-            new_sent.append((node["type"], word, ind, ind+len(word)))
+        if ind and not ntype.startswith("SA_") and ntype != "NOTA":
+            new_sent.append((ntype, word, ind, ind+len(word)))
     return sorted(new_sent, key=lambda x: x[2])
 
 def view(sentence):
@@ -45,12 +57,12 @@ def view(sentence):
     return final
 
 def as_key_val(a):
-    return ("%s (%d, %d)" % a[1:]), a[0]
+    return ("%s (%d, %d)" % a[1:]), a[0].upper()
 
-def compare_taggings(parse1, parse2):
+def compare_taggings(parse1, parse2, sup=False):
     sentence = parse1["sentence"]
     parse1 = tagged(parse1)
-    parse2 = tagged(parse2)
+    parse2 = tagged(parse2, sup=sup)
 
     res = ddict(lambda: ([], []))
     for x in parse1:

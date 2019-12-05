@@ -469,6 +469,16 @@ def compare_parses(reference, input_file, alignc, scorec, outputc):
     if outputc.as_json:
         print(json.dumps(all_sentences_json, indent=2))
     else:
+        total_gold = 0
+        correct_gold = 0
+        for x in all_sentences_json:
+            for w in x["alignments"]:
+                if w["gold"]:
+                    total_gold += 1
+                    for f in w["sup_trips"]:
+                        if f in w["gold"]:
+                            correct_gold += 1
+        print(correct_gold/total_gold)
         print(scores)
         print("Precision:", precision)
         print("Recall   :", recall)

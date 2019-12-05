@@ -10,6 +10,7 @@ from ratelimit import limits, sleep_and_retry
 
 
 stop = stopwords.words("english")
+MODEL = Model.SEMCOR_OMSTI_ONESEC_WORDNET
 
 def distribution(val):
     "sum, max, ranked"
@@ -72,7 +73,7 @@ def run_sentence(words, api, get_distribution, taken=None):
     untagged2 = " ".join(words[t_index+max_tags:])
     sentence = (untagged1 + " " + tagged + " " + untagged2).strip()
 
-    taken += api.disambiguate(sentence, Language.EN, Model.SEMCOR_OMSTI_ONESEC_WORDNET, get_distribution)
+    taken += api.disambiguate(sentence, Language.EN, MODEL, get_distribution)
     if len(taken) < len([x for x in words if x not in stop]):
         return run_sentence(words, api, get_distribution, taken)
     return taken
@@ -123,7 +124,7 @@ def tag_document(struct, api, share, comb, data_type="plain", forced_bracketing=
 @limits(calls=2000, period=3600)
 def tag_text(text, api):
     api = SupWSD(api)
-    result = api.disambiguate(text, Language.EN, Model.SEMCOR_OMSTI_ONESEC_WORDNET, True)
+    result = api.disambiguate(text, Language.EN, MODEL, True)
     data = []
     index = 0
     for r in result:
@@ -161,3 +162,4 @@ def raw_align(struct, api):
         if not added:
             unpaired_wsd.append(ind_w)
     return struct
+

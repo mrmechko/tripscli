@@ -20,14 +20,15 @@ def simple(filename, data):
 @click.command()
 @click.option("--file1", "-u", "file1", prompt=True)
 @click.option("--file2", "-v", "file2", prompt=True)
+@click.option("--sup", "-s", "sup", count=True)
 @click.option("--input-type", "-t", "data", default="plain", type=click.Choice(["plain", "story"]), prompt=True)
 @click.option("--output-file", "-o", "output", default="", prompt=True)
-def compare(file1, file2, data, output):
+def compare(file1, file2, sup, data, output):
     file1 = _json(file1)
     file2 = _json(file2)
     if data == "story":
         file1, file2 = file1["sentences"], file2["sentences"]
-        result = [compare_taggings(a, b) for a, b in zip(file1, file2)]
+        result = [compare_taggings(a, b, sup>0) for a, b in zip(file1, file2)]
     elif data == "plain":
         result = compare_taggings(file1, file2)
     dump_json(result, output)

@@ -7,7 +7,7 @@ from collections import namedtuple
 from pytrips.ontology import get_ontology as ont
 
 EXCLUDE = ["wordnet", "gold"]
-TripsOptions = namedtuple("TripsConnection", "tmp,url,sensetags,hinting,sense_pruning,pos_include".split(","))
+TripsOptions = namedtuple("TripsConnection", "tmp,url,sensetags,hinting,sense_pruning,pos_include,as_xml".split(","))
 
 def clean_word(word):
     return word.replace(" ", "-")
@@ -59,9 +59,16 @@ MOD = {"none": lambda x: x,
 
 modifier_names = list(MOD.keys())
 
+def _prefix(name, pref="ont::"):
+    name = name.lower()
+    if not name.startswith(pref):
+        name = pref + name
+    return name
+
 def parse_sentence(entry, options, debug):
     cleaned_tags = []
     exclude = [e for e in EXCLUDE if e != options.sensetags]
+    #clean the tags to prepare construction of InputTag items
     for i in entry["input_tags"]:
         i['lex'] = clean_word(i['lex'])
         if options.pos_include and "pos" in i and i["pos"].lower() not in options.pos_include:
@@ -70,6 +77,7 @@ def parse_sentence(entry, options, debug):
             i["senses"] = MOD[options.sense_pruning](i["senses"])
             i["senses"] = {k: prob_range(v, 0.2) for k, v in i["senses"].items()}
         cleaned_tags.append({k: v for k, v in i.items() if k not in exclude})
+
     with open(options.tmp, 'w') as tmp:
         if options.hinting == "prog" or options.hinting == "both":
             json.dump(cleaned_tags, tmp)
@@ -77,16 +85,43 @@ def parse_sentence(entry, options, debug):
             json.dump([], tmp)
     if options.hinting == "pre" or options.hinting == "both":
         if options.sensetags == "gold":
-            tags = [InputTag(x['lex'], x['start'], x['end'], x['lftype'][0], 1.0) for x in entry['input_tags'] if 'lftype' in x and len(x['lftype']) == 1]
+            tags = [InputTag(
+                x['lex'], 
+                x['start'], 
+                x['end'], 
+                " ".join(x.get('lftype', [])), 
+                1.0,
+                x.get('penn-pos', ""), 
+                ) for x in entry['input_tags'] if 'lftype' in x or 'penn-pos' in x]
         else:
             tags = [
                     [
-                        InputTag(word['lex'], word['start'], word['end'], sense, prob_range(prob, 0.01)) 
+                        InputTag(
+                            word['lex'], 
+                            word['start'], 
+                            word['end'], 
+                            sense, 
+                            prob_range(prob, 0.01),
+                            word.get("penn-pos", "")
+                        ) 
                         for sense, prob in word['senses'].items()
-                        ] for word in cleaned_tags if 'senses' in word]
-            tags = sum(tags, [])
+                    ] for word in cleaned_tags if 'senses' in word
+            ]
+            # add in the penn-pos without lftypes
+            tags2 = [InputTag(
+                            word['lex'], 
+                            word['start'], 
+                            word['end'], 
+                            "", 
+                            1,
+                            word["penn-pos"],
+                            "POS"
+                        ) for word in cleaned_tags if 'penn-pos' in word]
+            tags = sum(tags, []) + tags2
     else:
         tags = []
-    res = wsd(entry["sentence"], tags, url=options.url, debug=debug)
-    res["sentence"] = entry["sentence"]
+    #print(entry["sentence"], [str(t) for t in tags])
+    res = wsd(entry["sentence"], tags, url=options.url, as_xml=options.as_xml, debug=debug)
+    if not options.as_xml:
+        res["sentence"] = entry["sentence"]
     return res
