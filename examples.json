@@ -1,0 +1,669 @@
+[
+  {
+    "sentence": "For once in my life I'm doing a good deed... And it is useless.",
+    "input_tags": [
+      {
+        "start": 0,
+        "end": 3,
+        "lex": "For",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 4,
+        "end": 8,
+        "lex": "once",
+	"penn-pos": "NN",
+        "pos": "ADV",
+        "tag": "RB"
+      },
+      {
+        "start": 9,
+        "end": 11,
+        "lex": "in",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 12,
+        "end": 14,
+        "lex": "my",
+        "pos": "DET",
+        "tag": "PRP$"
+      },
+      {
+        "start": 15,
+        "end": 19,
+        "lex": "life",
+        "pos": "NOUN",
+        "tag": "NN"
+      },
+      {
+        "start": 20,
+        "end": 21,
+        "lex": "I",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 21,
+        "end": 23,
+        "lex": "'m",
+        "pos": "VERB",
+        "tag": "VBP"
+      },
+      {
+        "start": 24,
+        "end": 29,
+        "lex": "doing",
+        "pos": "VERB",
+        "tag": "VBG"
+      },
+      {
+        "start": 30,
+        "end": 31,
+        "lex": "a",
+        "pos": "DET",
+        "tag": "DT"
+      },
+      {
+        "start": 32,
+        "end": 36,
+        "lex": "good",
+        "pos": "ADJ",
+        "tag": "JJ"
+      },
+      {
+        "start": 37,
+        "end": 41,
+        "lex": "deed",
+        "pos": "NOUN",
+        "tag": "NN"
+      },
+      {
+        "start": 41,
+        "end": 44,
+        "lex": "...",
+        "pos": "PUNCT",
+        "tag": ":"
+      },
+      {
+        "start": 45,
+        "end": 48,
+        "lex": "And",
+        "pos": "CCONJ",
+        "tag": "CC",
+	"penn-pos": "CC"
+      },
+      {
+        "start": 49,
+        "end": 51,
+        "lex": "it",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 52,
+        "end": 54,
+        "lex": "is",
+        "pos": "VERB",
+        "tag": "VBZ"
+      },
+      {
+        "start": 55,
+        "end": 62,
+        "lex": "useless",
+        "pos": "ADJ",
+        "tag": "JJ"
+      },
+      {
+        "start": 62,
+        "end": 63,
+        "lex": ".",
+        "pos": "PUNCT",
+        "tag": "."
+      }
+    ],
+    "spans": [
+      {
+        "start": 12,
+        "end": 19,
+        "text": "my life",
+        "tag": "NP"
+      },
+      {
+        "start": 20,
+        "end": 21,
+        "text": "I",
+        "tag": "NP"
+      },
+      {
+        "start": 30,
+        "end": 41,
+        "text": "a good deed",
+        "tag": "NP"
+      },
+      {
+        "start": 49,
+        "end": 51,
+        "text": "it",
+        "tag": "NP"
+      }
+    ]
+  },
+  {
+    "sentence": "Why do you want to leave today?",
+    "input_tags": [
+      {
+        "start": 0,
+        "end": 3,
+        "lex": "Why",
+        "pos": "ADV",
+        "tag": "WRB",
+	"penn-pos": "WRB"
+      },
+      {
+        "start": 4,
+        "end": 6,
+        "lex": "do",
+        "pos": "VERB",
+        "tag": "VBP"
+      },
+      {
+        "start": 7,
+        "end": 10,
+        "lex": "you",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 11,
+        "end": 15,
+        "lex": "want",
+        "pos": "VERB",
+        "tag": "VB"
+      },
+      {
+        "start": 16,
+        "end": 18,
+        "lex": "to",
+        "pos": "PART",
+        "tag": "TO"
+      },
+      {
+        "start": 19,
+        "end": 24,
+        "lex": "leave",
+        "pos": "VERB",
+        "tag": "VB"
+      },
+      {
+        "start": 25,
+        "end": 30,
+        "lex": "today",
+        "pos": "NOUN",
+        "tag": "NN",
+	"penn-pos": "RB"
+      },
+      {
+        "start": 30,
+        "end": 31,
+        "lex": "?",
+        "pos": "PUNCT",
+        "tag": "."
+      }
+    ],
+    "spans": [
+      {
+        "start": 7,
+        "end": 10,
+        "text": "you",
+        "tag": "NP"
+      }
+    ]
+  },
+  {
+    "sentence": "This is the town I told you about.",
+    "input_tags": [
+      {
+        "start": 0,
+        "end": 4,
+        "lex": "This",
+        "pos": "DET",
+        "tag": "DT",
+	"penn-pos": "WP"
+      },
+      {
+        "start": 5,
+        "end": 7,
+        "lex": "is",
+        "pos": "VERB",
+        "tag": "VBZ"
+      },
+      {
+        "start": 8,
+        "end": 11,
+        "lex": "the",
+        "pos": "DET",
+        "tag": "DT"
+      },
+      {
+        "start": 12,
+        "end": 16,
+        "lex": "town",
+        "pos": "NOUN",
+        "tag": "NN"
+      },
+      {
+        "start": 17,
+        "end": 18,
+        "lex": "I",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 19,
+        "end": 23,
+        "lex": "told",
+        "pos": "VERB",
+        "tag": "VBD"
+      },
+      {
+        "start": 24,
+        "end": 27,
+        "lex": "you",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 28,
+        "end": 33,
+        "lex": "about",
+        "pos": "ADP",
+        "tag": "IN",
+	"penn-pos": "RP"
+      },
+      {
+        "start": 33,
+        "end": 34,
+        "lex": ".",
+        "pos": "PUNCT",
+        "tag": "."
+      }
+    ],
+    "spans": [
+      {
+        "start": 8,
+        "end": 16,
+        "text": "the town",
+        "tag": "NP"
+      },
+      {
+        "start": 17,
+        "end": 18,
+        "text": "I",
+        "tag": "NP"
+      },
+      {
+        "start": 24,
+        "end": 27,
+        "text": "you",
+        "tag": "NP"
+      }
+    ]
+  },
+  {
+    "sentence": "You will progress in proportion to your abilities.",
+    "input_tags": [
+      {
+        "start": 0,
+        "end": 3,
+        "lex": "You",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 4,
+        "end": 8,
+        "lex": "will",
+        "pos": "VERB",
+        "tag": "MD"
+      },
+      {
+        "start": 9,
+        "end": 17,
+        "lex": "progress",
+        "pos": "VERB",
+        "tag": "VB"
+      },
+      {
+        "start": 18,
+        "end": 20,
+        "lex": "in",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 21,
+        "end": 31,
+        "lex": "proportion",
+        "pos": "NOUN",
+        "tag": "NN"
+      },
+      {
+        "start": 32,
+        "end": 34,
+        "lex": "to",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 35,
+        "end": 39,
+        "lex": "your",
+        "pos": "DET",
+        "tag": "PRP$"
+      },
+      {
+        "start": 40,
+        "end": 49,
+        "lex": "abilities",
+        "pos": "NOUN",
+        "tag": "NNS"
+      },
+      {
+        "start": 49,
+        "end": 50,
+        "lex": ".",
+        "pos": "PUNCT",
+        "tag": "."
+      }
+    ],
+    "spans": [
+      {
+        "start": 0,
+        "end": 3,
+        "text": "You",
+        "tag": "NP"
+      },
+      {
+        "start": 21,
+        "end": 49,
+        "text": "proportion to your abilities",
+        "tag": "NP",
+	"penn-cats": "NP"
+      },
+      {
+        "start": 35,
+        "end": 49,
+        "text": "your abilities",
+        "tag": "NP"
+      }
+    ]
+  },
+  {
+    "sentence": "You are too negligent of those around you.",
+    "input_tags": [
+      {
+        "start": 0,
+        "end": 3,
+        "lex": "You",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 4,
+        "end": 7,
+        "lex": "are",
+        "pos": "VERB",
+        "tag": "VBP"
+      },
+      {
+        "start": 8,
+        "end": 11,
+        "lex": "too",
+        "pos": "ADV",
+        "tag": "RB"
+      },
+      {
+        "start": 12,
+        "end": 21,
+        "lex": "negligent",
+        "pos": "ADJ",
+        "tag": "JJ"
+      },
+      {
+        "start": 22,
+        "end": 24,
+        "lex": "of",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 25,
+        "end": 30,
+        "lex": "those",
+        "pos": "DET",
+        "tag": "DT"
+      },
+      {
+        "start": 31,
+        "end": 37,
+        "lex": "around",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 38,
+        "end": 41,
+        "lex": "you",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 41,
+        "end": 42,
+        "lex": ".",
+        "pos": "PUNCT",
+        "tag": "."
+      }
+    ],
+    "spans": [
+      {
+        "start": 12,
+        "end": 24,
+        "text": "negligent of",
+        "tag": "NP"
+      },
+      {
+        "start": 38,
+        "end": 41,
+        "text": "you",
+        "tag": "NP"
+      }
+    ]
+  },
+  {
+    "sentence": "You ought to get to work on time.",
+    "input_tags": [
+      {
+        "start": 0,
+        "end": 3,
+        "lex": "You",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 4,
+        "end": 9,
+        "lex": "ought",
+        "pos": "VERB",
+        "tag": "MD"
+      },
+      {
+        "start": 10,
+        "end": 12,
+        "lex": "to",
+        "pos": "PART",
+        "tag": "TO",
+	"penn-pos": "IN"
+      },
+      {
+        "start": 13,
+        "end": 16,
+        "lex": "get",
+        "pos": "VERB",
+        "tag": "VB"
+      },
+      {
+        "start": 17,
+        "end": 19,
+        "lex": "to",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 20,
+        "end": 24,
+        "lex": "work",
+        "pos": "VERB",
+        "tag": "VB",
+	"penn-pos": "NN"
+      },
+      {
+        "start": 25,
+        "end": 27,
+        "lex": "on",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 28,
+        "end": 32,
+        "lex": "time",
+        "pos": "NOUN",
+        "tag": "NN"
+      },
+      {
+        "start": 32,
+        "end": 33,
+        "lex": ".",
+        "pos": "PUNCT",
+        "tag": "."
+      }
+    ],
+    "spans": [
+      {
+        "start": 0,
+        "end": 3,
+        "text": "You",
+        "tag": "NP"
+      },
+      {
+        "start": 28,
+        "end": 32,
+        "text": "time",
+        "tag": "NP"
+      }
+    ]
+  },
+  {
+    "sentence": "You should look after the children from time to time.",
+    "input_tags": [
+      {
+        "start": 0,
+        "end": 3,
+        "lex": "You",
+        "pos": "PRON",
+        "tag": "PRP"
+      },
+      {
+        "start": 4,
+        "end": 10,
+        "lex": "should",
+        "pos": "VERB",
+        "tag": "MD"
+      },
+      {
+        "start": 11,
+        "end": 15,
+        "lex": "look",
+        "pos": "VERB",
+        "tag": "VB"
+      },
+      {
+        "start": 16,
+        "end": 21,
+        "lex": "after",
+        "pos": "ADP",
+        "tag": "IN", 
+	"penn-pos": "RP"
+      },
+      {
+        "start": 22,
+        "end": 25,
+        "lex": "the",
+        "pos": "DET",
+        "tag": "DT"
+      },
+      {
+        "start": 26,
+        "end": 34,
+        "lex": "children",
+        "pos": "NOUN",
+        "tag": "NNS"
+      },
+      {
+        "start": 35,
+        "end": 39,
+        "lex": "from",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 40,
+        "end": 44,
+        "lex": "time",
+        "pos": "NOUN",
+        "tag": "NN"
+      },
+      {
+        "start": 45,
+        "end": 47,
+        "lex": "to",
+        "pos": "ADP",
+        "tag": "IN"
+      },
+      {
+        "start": 48,
+        "end": 52,
+        "lex": "time",
+        "pos": "NOUN",
+        "tag": "NN"
+      },
+      {
+        "start": 52,
+        "end": 53,
+        "lex": ".",
+        "pos": "PUNCT",
+        "tag": "."
+      }
+    ],
+    "spans": [
+      {
+        "start": 16,
+        "end": 34,
+        "text": "after the children",
+        "tag": "NP",
+	"penn-cats": "ADVBL"
+      },
+      {
+        "start": 40,
+        "end": 52,
+        "text": "time to time",
+        "tag": "NP",
+	"penn-cats": "ADVBL"
+      }
+    ]
+  }
+]
