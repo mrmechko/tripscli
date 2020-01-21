@@ -241,6 +241,8 @@ def align_match(match, used=[], use_all=False, exact_match_only=False, referenti
 ScoreConfig = namedtuple("ScoreConfig", "hierarchy down significant")
 def list_accepts(node, values, score=ScoreConfig(-1,0,False)):
     node = ont()[node]
+    if not node:
+        return False
     values = set([ont()[v] for v in values])
     if score.significant:
         values = set([v.significant() for v in values])
@@ -398,15 +400,32 @@ def align_sentence(sentence, parse, config=AlignConfig(1,2,3), score=ScoreConfig
     return (correct, tagged, untagged, taggable, json_)
 
 #AlignT = namedtuple("AlignT", ["tag", "node", "remainder", "use_all"])
+
+def wupsim(src, target, semfac=False):
+    src = [ont()[f] for f in src if f]
+    target = [ont()[f] for f in target if f]
+    if semfac:
+        src = [f.significant() for f in src if f]
+        target = [f.significant() for f in src if f]
+    return sum([s.cosine(t) for s in src for t in target])/(max(len(src), 1) * max(len(target), 1))
+
+def significant_agr(gold, tags):
+    gold = set([ont()[g].significant() for g in gold if g and ont()[g]])
+    tags = set([ont()[t].significant() for t in tags if t and ont()[t]])
+    if gold.intersection(tags):
+        return 1
+    return 0
+
+SummaryT = namedtuple("SummaryT", "lex,gold,parser,sup,sup_sf,wup,wup_sf")
 def summary(tag):
     lftype = list(set(tag.tag.lftype))
     suptype= tag.tag.sup_trips
-    scores = sum([ont()[f].cosine(ont()[tag.node.type]) for f in lftype])
-    supscore = sum([ont()[f].cosine(ont()[st]) for f in lftype for st in suptype])
-    if lftype:
-        scores = scores/len(lftype)
-        supscore = supscore/len(lftype)*max(1, len(suptype))
-    return (tag.tag.word.lex, lftype, tag.node.type, supscore, scores)
+
+    wup = wupsim(lftype, [tag.node.type])
+    sup = wupsim(lftype, suptype)
+    wup_sf = significant_agr(lftype, [tag.node.type])
+    sup_sf = significant_agr(lftype, suptype)
+    return SummaryT(tag.tag.word.lex, lftype, tag.node.type, sup, sup_sf, wup, wup_sf)
 
 # word, gold_tags, parser_tag
 
@@ -434,52 +453,52 @@ def compare_parses(reference, input_file, alignc, scorec, outputc, instances=-1,
     incorrect_trips = Counter()
     incorrect_gold = Counter()
     for parse_file in elts:
-        try:
-            n = int(parse_file.split("_")[-1].split(".")[0])
-            if outputc.trace:
-                print(">", parse_file)
-            parse = load_parse(json.load(open(parse_file)))
-            if len(parse.utterances) != 1 and backoff_folder:
-                parse = load_parse(json.load(open(backoff_folder+"/"+parse_file.split("/")[-1])))
-            sentence = key[n]
-            if outputc.trace and parse.sentence != sentence.sentence:
-                print(parse.sentence)
-                print(sentence.sentence)
-            c, t, u, a, j = align_sentence(sentence, parse, config=alignc, score=scorec)
-            j["id"] = n
-            j["filename"] = parse_file
+        #try:
+        n = int(parse_file.split("_")[-1].split(".")[0])
+        if outputc.trace:
+            print(">", parse_file)
+        parse = load_parse(json.load(open(parse_file)))
+        if len(parse.utterances) != 1 and backoff_folder:
+            parse = load_parse(json.load(open(backoff_folder+"/"+parse_file.split("/")[-1])))
+        sentence = key[n]
+        if outputc.trace and parse.sentence != sentence.sentence:
+            print(parse.sentence)
+            print(sentence.sentence)
+        c, t, u, a, j = align_sentence(sentence, parse, config=alignc, score=scorec)
+        j["id"] = n
+        j["filename"] = parse_file
 
-            all_sentences_json.append(j)
+        all_sentences_json.append(j)
 
-            incorrect = [s for s in t if s not in c]
-            for i in incorrect:
-                if trace > 5:
-                    print(stringify(i))
-                types = i.tag.lftype
-                for tp in types:
-                    incorrect_gold[tp] += 1
-                incorrect_trips[i.node.type] += 1
+        incorrect = [s for s in t if s not in c]
+        for i in incorrect:
+            if trace > 5:
+                print(stringify(i))
+            types = i.tag.lftype
+            for tp in types:
+                incorrect_gold[tp] += 1
+            incorrect_trips[i.node.type] += 1
 
-            scores["correct"] += len(c)
-            scores["tagged"] += len(t)
-            scores["untagged"] += len(u)
-            scores["taggable"] += len(a)
-            scores["fragmented"] += int((len(parse.utterances) > 1) or (len(parse.utterances)==0))
-            corr = [summary(x) for x in c] 
-            err = 0
-            errable = 0
-            for x in [summary(y) for y in t]:
-                scores["total_wup"] += x[-1]
-                if x in corr or not x[1]:
-                    continue
-                #print(x)
-                err += x[-1]
-                errable += 1
-            scores["error"] += err
-            scores["errable"] += errable
-        except Exception as e:
-            print(e)
-            print(parse_file, "failed")
+        scores["correct"] += len(c)
+        scores["tagged"] += len(t)
+        scores["untagged"] += len(u)
+        scores["taggable"] += len(a)
+        scores["fragmented"] += int((len(parse.utterances) > 1) or (len(parse.utterances)==0))
+        corr = [summary(x) for x in c] 
+        err = 0
+        errable = 0
+        for x in [summary(y) for y in t]:
+            scores["total_wup"] += x.wup
+            scores["total_wup_semfac"] += x.wup_sf
+            scores["total_sup"] += x.sup
+            scores["total_sup_semfac"] += x.sup_sf
+            if x in corr or not x.gold:
+                continue
+            #print(x)
+            err += x.wup
+            errable += 1
+        scores["error"] += err
+        scores["errable"] += errable
 
     if instances > 0:
         scores["taggable"] = instances
@@ -507,13 +526,9 @@ def compare_parses(reference, input_file, alignc, scorec, outputc, instances=-1,
             for w in x["alignments"]:
                 if w["gold"]:
                     total_gold += 1
-                    sw = 0
                     for f in w["sup_trips"]:
-                        for g in w["gold"]:
-                            sw += ont()[g].cosine(ont()[f])
                         if f in w["gold"]:
                             correct_gold += 1
-                    scores["supwup"] += sw/max(1, len(w["sup_trips"])*len(w["gold"]))
         #print(correct_gold/total_gold)
         print(scores)
         print("Precision:", precision)
@@ -522,7 +537,9 @@ def compare_parses(reference, input_file, alignc, scorec, outputc, instances=-1,
         print("Frag.    :", scores["fragmented"]/total_gold)
         print("avg Error:", scores["error"]/scores["errable"])
         print("Wup      :", scores["total_wup"]/total_gold)
-        print("SupWup   :", scores["supwup"]/total_gold)
+        print("Wup-SF   :", scores["total_wup_semfac"]/total_gold)
+        print("SupWup   :", scores["total_sup"]/total_gold)
+        print("SupWup-SF:", scores["total_sup_semfac"]/total_gold)
         if trace > 5:
             pprint.pprint([i for i in incorrect_gold.most_common() if i[1] > 1])
             print("------")

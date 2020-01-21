@@ -133,7 +133,6 @@ def parse_sentence(entry, options, debug):
         tags = []
     #print(entry["sentence"], [str(t) for t in tags])
     res = wsd(entry["sentence"], tags, url=options.url, as_xml=options.as_xml, debug=debug)
-    print(res)
     if type(res) is list:
         res = {}
     if not options.as_xml:
