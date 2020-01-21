@@ -1,7 +1,8 @@
 import pandas as pd
 from collections import namedtuple
 from itertools import takewhile
-from pytrips.ontology import get_ontology
+
+from pytrips.ontology import get_ontology as ont 
 from nltk.corpus import wordnet as wn
 from .entry_iterator import simple_it
 
@@ -36,8 +37,8 @@ def get_spans(sentence, add_wn=False):
         word = clean(s.word)
         if "%" in s.tag:
             lex = wn.lemma_from_key(s.tag.split()[0]).name()
-            rtag = ["ont::"+x.name for x in get_ontology().get_wordnet(s.tag.split()[0], max_depth=3)]
-        this = {"start": start, "end": start+len(word), "lex": word, "lftype": rtag, "sid": s.sid}
+            rtag = ["ont::"+x.name for x in ont().get_wordnet(s.tag.split()[0], max_depth=3)]
+        this = {"start": start, "end": start+len(word), "pos": s.pos, "lex": word, "lftype": rtag, "sid": s.sid}
         if add_wn:
             this["gold"] = s.tag.split()
         spans.append(this)

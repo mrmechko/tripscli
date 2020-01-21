@@ -1,7 +1,7 @@
 from nltk.corpus import stopwords
 from it.si3p.supwsd.api import SupWSD
 from it.si3p.supwsd.config import Model, Language
-from pytrips.ontology import get_ontology as ont
+from pytrips.ontology import get_ontology as ont 
 from collections import defaultdict as ddict
 import soul
 from tqdm import tqdm
@@ -22,7 +22,7 @@ def distribution(val):
         if val == "max":
             max_elt, p = max(tps.items(), key=lambda x: x[1])
             return {max_elt: p}
-        return {} 
+        return tps 
     return lambda x: nmlz(_fn(x))
 
 def nmlz(val):

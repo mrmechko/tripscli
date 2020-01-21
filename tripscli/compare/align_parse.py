@@ -1,5 +1,5 @@
 from soul.files import ls
-from pytrips.ontology import get_ontology as ont
+from pytrips.ontology import get_ontology as ont 
 import pprint
 import json, os
 
@@ -142,6 +142,8 @@ def load_node(node_json):
 def load_utterance(utt_json):
     if type(utt_json) is list:
         return [load_utterance(dct) for dct in utt_json]
+    # we want to modify this to take the bad parses first
+    utt = reversed(list(utt_json.items()))
     nodes = {_lower(k): load_node(v) for k, v in utt_json.items() if k != "root" and not _lower(v["type"]).startswith("sa_")}
     root = utt_json["root"]
 
@@ -312,6 +314,8 @@ def _multi(exact_matches, word_matches, multi_word_matches, aligned, used, used_
 
     nodes = [n for n in nodes if n not in used]
     tags = [t for t in tags if t not in used_tag]
+    if trace > 5:
+        print(len(nodes))
     return exact_matches, word_matches, multi_word_matches, aligned, used, used_tag, nodes, tags
 
 def align(sentence, nodes, config=AlignConfig(1,2,3)):
@@ -391,13 +395,23 @@ def align_sentence(sentence, parse, config=AlignConfig(1,2,3), score=ScoreConfig
     #print_("\n".join([stringify(x) for x in unmatched]))
     #print_("\n\n")
     #
-    #print_("correct:", len(correct), "tagged:", len(tagged), "untagged:", len(untagged), "taggable:", len(taggable))
     return (correct, tagged, untagged, taggable, json_)
+
+#AlignT = namedtuple("AlignT", ["tag", "node", "remainder", "use_all"])
+def summary(tag):
+    lftype = list(set(tag.tag.lftype))
+    suptype= tag.tag.sup_trips
+    scores = sum([ont()[f].cosine(ont()[tag.node.type]) for f in lftype])
+    supscore = sum([ont()[f].cosine(ont()[st]) for f in lftype for st in suptype])
+    if lftype:
+        scores = scores/len(lftype)
+        supscore = supscore/len(lftype)*max(1, len(suptype))
+    return (tag.tag.word.lex, lftype, tag.node.type, supscore, scores)
 
 # word, gold_tags, parser_tag
 
 OutputConfig = namedtuple("OutputConfig", "trace verbose as_json")
-def compare_parses(reference, input_file, alignc, scorec, outputc):
+def compare_parses(reference, input_file, alignc, scorec, outputc, instances=-1, backoff_folder=None):
     global trace
     global print_
     print(alignc)
@@ -409,6 +423,8 @@ def compare_parses(reference, input_file, alignc, scorec, outputc):
         if outputc.as_json:
             print_ = lambda *x: print(*x, file=sys.stderr) # might need to make as_json provide a file
     scores = Counter()
+    confusion = []
+    
     #1. load key
     key = [load_sentence(j) for j in json.load(open(reference))]
     #2. load parse
@@ -423,6 +439,8 @@ def compare_parses(reference, input_file, alignc, scorec, outputc):
             if outputc.trace:
                 print(">", parse_file)
             parse = load_parse(json.load(open(parse_file)))
+            if len(parse.utterances) != 1 and backoff_folder:
+                parse = load_parse(json.load(open(backoff_folder+"/"+parse_file.split("/")[-1])))
             sentence = key[n]
             if outputc.trace and parse.sentence != sentence.sentence:
                 print(parse.sentence)
@@ -446,11 +464,25 @@ def compare_parses(reference, input_file, alignc, scorec, outputc):
             scores["tagged"] += len(t)
             scores["untagged"] += len(u)
             scores["taggable"] += len(a)
+            scores["fragmented"] += int((len(parse.utterances) > 1) or (len(parse.utterances)==0))
+            corr = [summary(x) for x in c] 
+            err = 0
+            errable = 0
+            for x in [summary(y) for y in t]:
+                scores["total_wup"] += x[-1]
+                if x in corr or not x[1]:
+                    continue
+                #print(x)
+                err += x[-1]
+                errable += 1
+            scores["error"] += err
+            scores["errable"] += errable
         except Exception as e:
-            if trace:
-                print(e)
-            print_(parse_file, "failed")
+            print(e)
+            print(parse_file, "failed")
 
+    if instances > 0:
+        scores["taggable"] = instances
     if not scores["tagged"]:
         precision = 0
     else:
@@ -475,14 +507,22 @@ def compare_parses(reference, input_file, alignc, scorec, outputc):
             for w in x["alignments"]:
                 if w["gold"]:
                     total_gold += 1
+                    sw = 0
                     for f in w["sup_trips"]:
+                        for g in w["gold"]:
+                            sw += ont()[g].cosine(ont()[f])
                         if f in w["gold"]:
                             correct_gold += 1
-        print(correct_gold/total_gold)
+                    scores["supwup"] += sw/max(1, len(w["sup_trips"])*len(w["gold"]))
+        #print(correct_gold/total_gold)
         print(scores)
         print("Precision:", precision)
         print("Recall   :", recall)
         print("F1       :", f1)
+        print("Frag.    :", scores["fragmented"]/total_gold)
+        print("avg Error:", scores["error"]/scores["errable"])
+        print("Wup      :", scores["total_wup"]/total_gold)
+        print("SupWup   :", scores["supwup"]/total_gold)
         if trace > 5:
             pprint.pprint([i for i in incorrect_gold.most_common() if i[1] > 1])
             print("------")

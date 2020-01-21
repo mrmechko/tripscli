@@ -1,13 +1,24 @@
 from tripsweb.query import wsd
 from tripsweb.query import InputTag
 import json, soul
-#import sys, os, 
 
 from collections import namedtuple
-from pytrips.ontology import get_ontology as ont
+from pytrips.ontology import get_ontology as ont 
+
+from nltk.corpus import wordnet as wn
 
 EXCLUDE = ["wordnet", "gold"]
 TripsOptions = namedtuple("TripsConnection", "tmp,url,sensetags,hinting,sense_pruning,pos_include,as_xml".split(","))
+
+
+def sp_agrees(sense, pos):
+    if "%" not in sense:
+        return True
+    opos = wn.lemma_from_key(sense).synset.pos()
+    if pos in ["noun", "verb"]:
+        return pos.startswith(opos)
+    return True
+    
 
 def clean_word(word):
     return word.replace(" ", "-")
@@ -51,7 +62,7 @@ MOD = {"none": lambda x: x,
        "best": lambda x: nbest(x, 1),
        "collated": collated,
        "best1": lambda x: collated(x, n=1, r=0),
-       "best3": lambda x: collated(x, n=1, r=0),
+       "best3": lambda x: collated(x, n=3, r=0),
        "abstracted": abstracted,
        "cutoff": cutoff,
        "lightcutoff": light_cutoff
@@ -101,10 +112,10 @@ def parse_sentence(entry, options, debug):
                             word['start'], 
                             word['end'], 
                             sense, 
-                            prob_range(prob, 0.01),
+                            1, #prob_range(prob, 0.01),
                             word.get("penn-pos", "")
                         ) 
-                        for sense, prob in word['senses'].items()
+                        for sense, prob in word['senses'].items() if sp_agrees(sense, word.get("pos", ""))
                     ] for word in cleaned_tags if 'senses' in word
             ]
             # add in the penn-pos without lftypes
@@ -122,6 +133,9 @@ def parse_sentence(entry, options, debug):
         tags = []
     #print(entry["sentence"], [str(t) for t in tags])
     res = wsd(entry["sentence"], tags, url=options.url, as_xml=options.as_xml, debug=debug)
+    print(res)
+    if type(res) is list:
+        res = {}
     if not options.as_xml:
         res["sentence"] = entry["sentence"]
     return res

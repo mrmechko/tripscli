@@ -33,11 +33,12 @@ def query(text, parameters=default_parameters, input_tags=[], url=default_step, 
     print(type(parameters))
     parameters = {p: q for p, q in parameters.items()}
     parameters["input"] = text
-    ttype = parameters.get("tag-type", [])
+    ttype = parameters.get("tag-type", ["default"])
 
     if input_tags:
         ttype = ttype + ["input"]
-        parameters["input-tags"] = "(%s)" % " ".join([str(i) for i in input_tags])
+        parameters["input-tags"] = "(\n\t%s\n)" % "\n\t".join([str(i) for i in input_tags])
+        print(parameters["input-tags"])
 
     parameters = {p: q for p, q in parameters.items() if q}
 
@@ -137,14 +138,17 @@ class InputTag:
         lftype = ""
         postag = ""
         pencat = ""
+        lex = ":LEX"
+        if self.prefix in ["PHRASE", "CLAUSE"]:
+            lex = ":TEXT"
         if self.lftype and self.prefix == "SENSE":
             lftype = ":LFTYPE ({}) ".format(self.lftype)
         if self.pos:
             postag = ":penn-pos ({}) ".format(self.pos)
         if self.cat:
-            pencat = ":penn-cats ({}) ".format(self.cat)
+            pencat = ":penn-cat ({}) ".format(self.cat)
 
-        return '(%s :LEX "%s" :START %d :END %d %s%s%s :SCORE %f :DOMAIN-SPECIFIC-INFO (TERM :ID %s))' % (self.prefix, self.lex, self.start, self.end, lftype, postag, pencat, self.score, self.hinter)
+        return '(%s %s "%s" :START %s :END %s %s%s%s :SCORE %f)' % (self.prefix, lex, self.lex, str(self.start), str(self.end), lftype, postag, pencat, self.score)
 
 def read_tag(tag, hinter="SEM-HINT"):
     itags = []
@@ -155,6 +159,16 @@ def read_tag(tag, hinter="SEM-HINT"):
                     start=tag["start"],
                     end=tag["end"],
                     pos=tag["penn-pos"],
+                    score=tag.get("score", 1.0),
+                    prefix="POS",
+                    hinter=hinter))
+    elif "tag" in tag: # HAX!
+       itags.append(
+                InputTag(
+                    lex=tag["lex"],
+                    start=tag["start"],
+                    end=tag["end"],
+                    pos=tag["tag"],
                     score=tag.get("score", 1.0),
                     prefix="POS",
                     hinter=hinter))
@@ -175,8 +189,8 @@ def read_word_tags(input_tags):
     return sum([read_tag(tag) for tag in input_tags], [])
 
 def read_span(span):
-    return [InputTag(lex=span["text"], start=span["start"], end=span["end"], cat=span["penn-cats"])]
+    return [InputTag(lex=span["text"], start=span["start"], end=span["end"], cat=span["penn-cat"], score=0, prefix="PHRASE")]
 
 def read_cats(spans):
-    return sum([read_span(span) for span in spans if "penn-cats" in span], [])
+    return sum([read_span(span) for span in spans if "penn-cat" in span], [])
 

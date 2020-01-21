@@ -29,13 +29,14 @@ def tagged(sentence, sup=False):
             ntype = node["type"]
         if word == "++none++":
             continue
-        query = re.findall("[^\w]%s[^\w]" % word, text)
+        span = text[node["start"]:node["end"]]
+        query = re.findall("[^\w]%s[^\w]" % word, span)
         if not query:
             continue
         if len(query) > 1:
-            print(word, "has multiple matches")
+            print(word, "has multiple matches in span.")
             continue
-        ind = text.find(query[0])
+        ind = span.find(query[0]) + node["start"]
         if ind and not ntype.startswith("SA_") and ntype != "NOTA":
             new_sent.append((ntype, word, ind, ind+len(word)))
     return sorted(new_sent, key=lambda x: x[2])
@@ -59,7 +60,7 @@ def view(sentence):
 def as_key_val(a):
     return ("%s (%d, %d)" % a[1:]), a[0].upper()
 
-def compare_taggings(parse1, parse2, sup=False):
+def compare_taggings(parse1, parse2, sup=False, diff=True):
     sentence = parse1["sentence"]
     parse1 = tagged(parse1)
     parse2 = tagged(parse2, sup=sup)
@@ -71,5 +72,10 @@ def compare_taggings(parse1, parse2, sup=False):
     for x in parse2:
         a, b = as_key_val(x)
         res[a][1].append(b)
+
+    if diff:
+        for r in list(res.keys()):
+            if len(res[r]) == 2 and res[r][0] == res[r][1]:
+                del res[r]
     
     return {"sentence": sentence, "tags": res}

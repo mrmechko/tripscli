@@ -46,9 +46,11 @@ def compare(file1, file2, sup, data, output):
 @click.option("--significant", "-s", "significant", count=True)
 @click.option("--hierarchy", "-h", "hierarchy", default=-1, type=int)
 @click.option("--down", "-d", "down", default=0, type=int)
+@click.option("--instances", "-n", "instances", default=-1, type=int)
+@click.option("--backoff", "-b", "backoff", default=None)
 @click_config_file.configuration_option(implicit=False, provider=json_config_provider)
-def compare_parse(reference, input_file, verbose, as_json, trace, word, multi, exact, significant, hierarchy, down):
+def compare_parse(reference, input_file, verbose, as_json, trace, word, multi, exact, significant, hierarchy, down, instances, backoff):
     outputc = OutputConfig(trace, verbose, as_json)
     alignc = AlignConfig(word, multi, exact)
     scorec = ScoreConfig(hierarchy, down, significant)
-    compare_parses(reference, input_file, alignc, scorec, outputc)
+    compare_parses(reference, input_file, alignc, scorec, outputc, instances, backoff)

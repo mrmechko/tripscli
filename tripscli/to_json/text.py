@@ -17,7 +17,7 @@ def token_to_json(token, sid=None, gold=None, lftype=None):
        }
     """
     start = token.idx
-    end = len(token) + start
+    end = len(token) + start - 1
     lex = str(token)
     pos = str(token.pos_)
     tag = str(token.tag_)

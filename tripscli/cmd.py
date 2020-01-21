@@ -9,10 +9,13 @@ from .compare import simple as simple_view
 from .compare import compare, compare_parse
 from .semcor2csv import semcor2csv
 
+from pytrips.ontology import get_ontology
+
 # to_json should handle the iterator construction
 @click.group()
-@click.pass_context
-def cli(ctx):
+@click.option("--gloss/--no-gloss", default=False)
+def cli(gloss):
+    get_ontology(use_gloss=gloss, single=True)
     pass
 
 cli.add_command(to_json)
