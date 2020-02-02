@@ -391,7 +391,7 @@
         "end": 49,
         "text": "proportion to your abilities",
         "tag": "NP",
-	"penn-cats": "NP"
+	"penn-cat": "NP"
       },
       {
         "start": 35,
@@ -655,14 +655,14 @@
         "end": 34,
         "text": "after the children",
         "tag": "NP",
-	"penn-cats": "ADVBL"
+	"penn-cat": "ADVBL"
       },
       {
         "start": 40,
         "end": 52,
         "text": "time to time",
         "tag": "NP",
-	"penn-cats": "ADVBL"
+	"penn-cat": "ADVBL"
       }
     ]
   }

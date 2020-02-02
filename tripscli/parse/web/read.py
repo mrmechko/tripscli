@@ -1,57 +1,118 @@
-import json, xmltodict
-from collections import namedtuple, OrderedDict
+import json
+from collections import namedtuple
 
-# @rdf:ID, LF:indicator, LF:type, role:*, LF:start, LF:end
+import xml.etree.ElementTree as et
 
-def find_utts(dct):
-    utts = []
-    for k, v in dct.items():
-        if k.lower() == "utt":
-            utts += [v]
-        elif isinstance(v, dict):
-            utts += find_utts(v)
-        elif type(v) is list:
-            utts += [find_utts(x) for x in v]
-    return utts
+# @{"+_ns["rdf"]+"}ID, {"+_ns["LF"]+"}indicator, {"+_ns["LF"]+"}type, {"+_ns["role"]+"}*, {"+_ns["LF"]+"}start, {"+_ns["LF"]+"}end
+def none_or_text(x):
+    if x is not None:
+        return x.text
+    return x
+
+def none_or_int(x):
+    if x is not None:
+        return int(x.text)
+    return -1
+
+_ns = {
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "role": "http://www.cs.rochester.edu/research/trips/role#",
+    "LF": "http://www.cs.rochester.edu/research/trips/LF#"
+}
+
+def ns(n,v):
+    return "{%s}%s" % (_ns[n], v)
+
+for pre, uri in _ns.items():
+    et.register_namespace(pre, uri)
+
+class ParseObject(object):
+    def __init__(self, value):
+        self.value = value
+        self.alts = []
+        if self.value.find("alt-hyps"):
+            self.alts = [ParseObject.instance(x) for x in self.value.find("alt-hyps")]
+
+    @staticmethod
+    def instance(element):
+        if element.tag == "failed-to-parse":
+            return FailedToParse(element)
+        elif element.tag == "utt":
+            return Utterance(element)
+        elif element.tag == "compound-communication-act":
+            return CompoundCommunicationAct(element)
+        else:
+            return FailedToParse(element)
+
+    def alternative(self, i):
+        if self.alts and i < len(self.alts):
+            return self.alts[i]
+        return None
+
+    def as_json(self):
+        parse = []
+        if type(self) is Utterance:
+            parse = [self._as_json()]
+        elif type(self) is CompoundCommunicationAct:
+            parse = self._as_json()
+        if self.alts:
+            return {"parse": parse, "alternatives": [[a._as_json()] for a in self.alts]}
+        return {"parse": parse, "alternatives": []}
+
+class Utterance(ParseObject):
+    def _as_json(self):
+        terms = self.value.find("terms")
+        if not terms:
+            return {}
+        rdf = terms.find(ns("rdf", "RDF"))
+        desc = rdf.findall(ns("rdf", "Description"))
+        root = terms.attrib.get("root")
+        result = {n.attrib.get(ns("rdf","ID")): {
+            "id": n.attrib.get(ns("rdf", "ID")),
+            "indicator": none_or_text(n.find(ns("LF","indicator"))),
+            "type": none_or_text(n.find(ns("LF", "type"))),
+            "word": none_or_text(n.find(ns("LF", "word"))),
+            "roles":get_roles(n),
+            "start": none_or_int(n.find(ns("LF", "start"))),
+            "end": none_or_int(n.find(ns("LF", "end")))
+            } for n in desc}
+        result["root"] = root
+        return result
+
+class CompoundCommunicationAct(ParseObject):
+    def _as_json(self):
+        print("converting")
+        return [Utterance(u)._as_json() for u in self.value]
+
+class FailedToParse(ParseObject):
+    def _as_json(self):
+        return []
+
+def find_utts(node):
+    if not node:
+        return [ParseObject({})]
+    for v in node:
+        if v.tag == "utt":
+            return [Utterance(v)]
+        elif v.tag == "compound-communication-act":
+            return [CompoundCommunicationAct(v)]
+    return [FailedToParse(v)]
 
 def find_terms(stream):
-    js = xmltodict.parse(stream)
-    inputtags = js['trips-parser-output'].get("@input-tags", [])
-    debug = js['trips-parser-output']["debug"]
-    return find_utts(js), inputtags, debug
+    root = et.fromstring(stream)
+    inputtags = root.attrib.get("input-tags", [])
+    debug = root.find("debug")
+    return find_utts(root), inputtags, debug
 
 
 def val_or_ref(y):
-    if type(y) is OrderedDict:
-        return y.get("@rdf:resource", None)
-    elif type(y) is list:
-        return [val_or_ref(x) for x in y]
-    return y
+    link = y.attrib.get("{"+_ns["rdf"]+"}resource", None)
+    if link:
+        return link, link
+    return y.tag.split("}")[-1], y.text
 
 def get_roles(term):
-    return {x.split(":")[-1] : val_or_ref(y) for x, y in term.items() if x.startswith("role:")}
-
-def as_json(utt):
-    if type(utt) is list:
-        return [x for x in [as_json(u) for u in utt] if x]
-    try:
-        terms = utt["terms"]["rdf:RDF"]["rdf:Description"]
-        root = utt["terms"]["@root"] #terms[0]["@rdf:ID"]
-        if type(terms) is OrderedDict:
-            terms = [terms]
-        result = {n["@rdf:ID"]: {
-            "id": n.get("@rdf:ID", None),
-            "indicator":n.get("LF:indicator", None),
-            "type": n.get("LF:type", None),
-            "word": n.get("LF:word", None),
-            "roles":get_roles(n),
-            "start": int(n.get("LF:start", -1)),
-            "end": int(n.get("LF:end", -1))
-            } for n in terms}
-        result["root"] = root
-        return result
-    except:
-        return None
+    return dict([val_or_ref(n) for n in term if n.tag.startswith("{"+_ns["role"]+"}")])
 
 def _flat(x):
     if isinstance(x, list):
@@ -61,7 +122,7 @@ def _flat(x):
 
 def to_json(stream, debug=False):
     terms, inputtags, debug = find_terms(stream)
-    res = [as_json(t) for t in terms]
+    res = [t.as_json() for t in terms]
     if debug:
-        return {"parse": _flat(res), "inputtags": inputtags, "debug": debug.split("\n")}
+        return {"inputtags": inputtags, "debug": debug.split("\n"), **res[0]}
     return res

@@ -1,9 +1,12 @@
 from tripscli.parse import TripsParser
 from pprint import pprint
 
+
+testfile = "examples.json"
+
 p = TripsParser(url="http://localhost:8081/cgi/STEP")
-plain = p.query_json("examples.json", plain=True)
-res = p.query_json("examples.json", plain=False)
+res = p.query_json(testfile, plain=False)
+plain = p.query_json(testfile, plain=True)
 
 def strip_dbg(parse):
     del parse["debug"]

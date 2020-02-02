@@ -10,7 +10,7 @@ default_parameters = {
      "no-sense-words": "",
      "senses-only-for-penn-poss": "",
      "tag-type": ["default"],
-     "number-parses-desired": 1,
+     "number-parses-desired": 20,
      "split-mode": "split-sentences"
 }
 
@@ -30,7 +30,6 @@ def query(text, parameters=default_parameters, input_tags=[], url=default_step, 
     output: xml|json
     url: http://trips.ihmc.us/parser/cgi/step
     """
-    print(type(parameters))
     parameters = {p: q for p, q in parameters.items()}
     parameters["input"] = text
     ttype = parameters.get("tag-type", ["default"])
@@ -38,7 +37,6 @@ def query(text, parameters=default_parameters, input_tags=[], url=default_step, 
     if input_tags:
         ttype = ttype + ["input"]
         parameters["input-tags"] = "(\n\t%s\n)" % "\n\t".join([str(i) for i in input_tags])
-        print(parameters["input-tags"])
 
     parameters = {p: q for p, q in parameters.items() if q}
 
@@ -57,7 +55,7 @@ def parse(parameters, url=default_step, output="json", debug=True):
         if output == "json":
             result = to_json(result)
             if not debug:
-                result = {"parse": result}
+                result = result[0]#{"parse": result}
             result["sentence"] = parameters["input"]
             return result
         return result
@@ -89,7 +87,6 @@ class TripsParser:
         if plain:
             tags = []
 
-        print("parsing: %s" % sentence)
         return query(
                 sentence, 
                 parameters=self.parameters, 
