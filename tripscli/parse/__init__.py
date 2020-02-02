@@ -1,2 +1,2 @@
-from .cmd import parse
+from .cmd import parse, query
 from .web import TripsParser

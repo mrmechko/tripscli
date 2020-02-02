@@ -53,11 +53,11 @@ class ParseObject(object):
         parse = []
         if type(self) is Utterance:
             parse = [self._as_json()]
+            alts = [[a._as_json()] for a in self.alts]
         elif type(self) is CompoundCommunicationAct:
             parse = self._as_json()
-        if self.alts:
-            return {"parse": parse, "alternatives": [[a._as_json()] for a in self.alts]}
-        return {"parse": parse, "alternatives": []}
+            alts = [a._as_json() for a in self.alts]
+        return {"parse": parse, "alternatives": alts}
 
 class Utterance(ParseObject):
     def _as_json(self):
@@ -81,8 +81,7 @@ class Utterance(ParseObject):
 
 class CompoundCommunicationAct(ParseObject):
     def _as_json(self):
-        print("converting")
-        return [Utterance(u)._as_json() for u in self.value]
+        return [Utterance(u)._as_json() for u in self.value if u.find("terms")]
 
 class FailedToParse(ParseObject):
     def _as_json(self):

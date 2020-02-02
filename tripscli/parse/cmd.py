@@ -7,6 +7,7 @@ from ..util import json_config_provider
 from .run_sentences import parse_sentence, modifier_names, TripsOptions
 from tqdm import tqdm
 import requests
+from .web import TripsParser
 
 
 def get_from_vagrant(vagrant):
@@ -21,6 +22,20 @@ def get_from_vagrant(vagrant):
         url = ""
         click.echo("couldn't automatically construct url from vagrant config")
     return tmpfile, url
+
+@click.command()
+@click.option("--text", "-t", "text", prompt=True)
+@click.option("--vagrant-home", "-v", "vagrant", default="")
+@click.option("--trips-url", "-u", "url", default="http://trips.ihmc.us/parser/cgi/step")
+@click.option("--num-parses", '-n', "num", default=1)
+@click.option("--debug", "-d", "debug", default=False, type=bool)
+@click_config_file.configuration_option(implicit=False, provider=json_config_provider)
+def query(text, vagrant, url, num, debug):
+    if vagrant:
+        _t, url = get_from_vagrant(vagrant)
+    parser = TripsParser(url=url, debug=debug)
+    parser.set_parameter("number-parses-desired", num)
+    click.echo(parser.query(text))
 
 # to_json should handle the iterator construction
 @click.command()
