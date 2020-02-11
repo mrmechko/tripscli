@@ -59,7 +59,7 @@ def render_edges(utt, graph, format):
         for role, target in val["roles"].items():
             if target[0] == "#":
                 span = {} #{"ltail":"cluster_"+key, "lhead":"cluster_"+target[1:]}
-                graph.edge(key+"_type", target[1:], role, attrs=dict(format.get("base_edge", {}),
+                graph.edge(key, target[1:], role, attrs=dict(format.get("base_edge", {}),
                                                              **span
                                                              ))
 
