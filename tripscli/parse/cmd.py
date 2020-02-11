@@ -8,6 +8,7 @@ from .run_sentences import parse_sentence, modifier_names, TripsOptions
 from tqdm import tqdm
 import requests
 from .web import TripsParser
+from .web.dot import as_dot
 
 
 def get_from_vagrant(vagrant):
@@ -35,7 +36,22 @@ def query(text, vagrant, url, num, debug):
         _t, url = get_from_vagrant(vagrant)
     parser = TripsParser(url=url, debug=debug)
     parser.set_parameter("number-parses-desired", num)
-    click.echo(parser.query(text))
+    g = parser.query(text)
+
+    click.echo(json.dumps(g, indent=2))
+
+@click.command()
+@click.option("--parse", "-p", "parse", prompt=True)
+@click.option("--format", "-f", "format", default="svg", type=str)
+@click.option("--output", "-o", "output", prompt=True)
+@click.option("--alt", "-a", "alt", default=-1, type=int)
+def render(parse, format, output, alt):
+    res = json.load(open(parse))
+    if alt > -1:
+        parse = res["alternatives"][alt]
+    else:
+        parse = res["parse"]
+    as_dot(parse).graph().render(output, format=format)
 
 # to_json should handle the iterator construction
 @click.command()

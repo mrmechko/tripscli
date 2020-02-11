@@ -105,10 +105,11 @@ def find_terms(stream):
 
 
 def val_or_ref(y):
+    label = y.tag.split("}")[-1]
     link = y.attrib.get("{"+_ns["rdf"]+"}resource", None)
     if link:
-        return link, link
-    return y.tag.split("}")[-1], y.text
+        return label, link
+    return label, y.text
 
 def get_roles(term):
     return dict([val_or_ref(n) for n in term if n.tag.startswith("{"+_ns["role"]+"}")])
