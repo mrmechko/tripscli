@@ -99,9 +99,10 @@ def find_utts(node):
 
 def find_terms(stream):
     root = et.fromstring(stream)
+    sentence = root.attrib.get("input")
     inputtags = root.attrib.get("input-tags", [])
     debug = root.find("debug")
-    return find_utts(root), inputtags, debug
+    return find_utts(root), inputtags, debug, sentence
 
 
 def val_or_ref(y):
@@ -121,8 +122,8 @@ def _flat(x):
         return [x]
 
 def to_json(stream, debug=False):
-    terms, inputtags, debug = find_terms(stream)
-    res = [t.as_json() for t in terms]
+    terms, inputtags, debug, sentence = find_terms(stream)
+    res = [dict(t.as_json(), sentence=sentence) for t in terms]
     if debug:
-        return {"inputtags": inputtags, "debug": debug.split("\n"), **res[0]}
+        return {"inputtags": inputtags, "debug": debug.split("\n"), "sentence": sentence, **res[0]}
     return res
