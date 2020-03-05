@@ -1,39 +1,90 @@
 from pytrips.nodegraph import NodeGraph
+import json
 
-FORMAT = {
-    "default" : {
-        "base_node": {
-            "fontname": "Work Sans",
-            "shape": "plain",
-            "fontsize": "8"
-        },
-        "base_edge": {
-            "fontname": "Work Sans",
-            "fontsize": "8"
-        },
-        "root": {
-            "shape": "diamond",
-            "style": "filled",
-            "fillcolor": "grey"
-        }
+cell_style = {
+    "bgcolor": "black",
+    "font": {
+        "color": "white"
     }
 }
 
-def as_dot(graph, format="default"):
+node_style = {
+    "label": cell_style,
+    "value": cell_style
+}
+
+FORMAT = {
+    "base_node": {
+        "fontname": "Work Sans",
+        "shape": "plain",
+        "fontsize": "8"
+    },
+    "table": {
+        "cellspacing": "0",
+        "border": "0",
+        "cellborder": "0",
+        "cellpadding": "1",
+        "default_cell": node_style,
+        "lex": node_style,
+        "wn": node_style,
+        "ont": node_style,
+        "span": node_style,
+        "id": {
+            "label": dict(cell_style, colspan="2")
+        },
+        "indicator": node_style,
+    },
+    "base_edge": {
+        "fontname": "Work Sans",
+        "fontsize": "8"
+    },
+    "root": {
+        "shape": "diamond",
+        "style": "filled",
+        "fillcolor": "grey"
+    }
+}
+
+def get_format_key(format, key=None, default=None):
+    if key:
+        res = _get_format_key(format, *key.split("."))
+        if res:
+            return res
+    if default:
+        return get_format_key(format, key=default, default=None)
+    return format
+
+def _get_format_key(format, *keys):
+    keys = list(keys)
+    #print(keys)
+    if not keys:
+        return {}
+    if len(keys) == 1:
+        return format.get(keys[0], {})
+    return _get_format_key(format.get(keys[0], {}), *keys[1:])
+
+
+def as_dot(graph, format=None, label=None):
     """Takes a parse field from a json output, returns a graphviz graph"""
-    format = FORMAT.get(format, {})
+    if not format:
+        format = FORMAT
+    else:
+        format = json.load(open(format))
     H = NodeGraph(
-        default_node_attr=format.get("base_node", {}),
-        default_edge_attr=format.get("base_edge", {}),
-        no_escape=True
+        default_node_attr=get_format_key(format, "base_node"),
+        default_edge_attr=get_format_key(format, "base_edge"),
+        no_escape=True,
+        attrs=dict(rankdir="TB"),
+        label=label
     )
 
     for i, utterance in enumerate(graph):
         G = NodeGraph(
-            default_node_attr=format.get("base_node", {}),
-            default_edge_attr=format.get("base_edge", {}),
+            default_node_attr=get_format_key(format, "base_node"),
+            default_edge_attr=get_format_key(format, "base_edge"),
             no_escape=True,
-            name="cluster_utt_"+str(i)
+            name="utt_"+str(i),
+            attrs=dict(rankdir="TB")
         )    
         render_utterance(utterance, G, format)
         render_edges(utterance, G, format)
@@ -47,8 +98,6 @@ def render_utterance(utt, graph, format):
     ports = []
     for x, v in utt.items():
         if x != "root":
-            #val, attrs = render_node(v, format)
-            #graph.node(x, label=val, attrs=attrs)
             label, attrs = render_node_table(v, format)
             graph.node(x, attrs, label)
 
@@ -58,53 +107,127 @@ def render_edges(utt, graph, format):
             continue
         for role, target in val["roles"].items():
             if target[0] == "#":
-                span = {} #{"ltail":"cluster_"+key, "lhead":"cluster_"+target[1:]}
-                graph.edge(key, target[1:], role, attrs=dict(format.get("base_edge", {}),
-                                                             **span
-                                                             ))
+                name="%s_%s" % (key, target[1:])
+                graph.edge(key, target[1:], " %s   "  % str(TEXT(role)), attrs=dict(get_format_key(format, "edge.%s" % role, "base_edge")))
 
-def render_node_graph(node, format):
-    G = NodeGraph(
-        default_node_attr=format.get("base_node", {}),
-        default_edge_attr=dict(format.get("base_edge", {}), arrowhead="none"),
-        no_escape=True,
-        name="cluster_{}".format(node["id"]),
-        attrs={
-            "style": "filled",
-            "fillcolor": "white",
-            "rankdir": "LR"
-        }
-    )
-    
-    G.node(node["id"], attrs={"fontcolor": "red"})
-    get_label = lambda label: node["id"]+"_"+label
-
-    G.node(get_label("type"), label=node["type"])
-    G.edge(node["id"], get_label("type"))
-    
-    G.node(get_label("indicator"), label=node["indicator"])
-    G.edge(get_label("indicator"), get_label("type"), attrs={"arrowhead": "none"})
-    
+def render_condensed_node_table(node, format={}):
+    attrs = get_format_key(format, "base_node")
+    t_attrs = get_format_key(format, "table")
+    make_node = lambda text, path: TEXT(text or "* ", attrs=get_format_key(t_attrs, path+".value"), font=get_format_key(t_attrs, path+".value.font"))
+    link = "http://trips.ihmc.us/lexicon/data/ONT::%s.xml" % node["type"]
+    fnode = []
+    #fnode.append(make_node("(", ""))
+    fnode.append(make_node('<br />', "wn"))
+    fnode.append(make_node(node["type"], "ont"))
+    fnode.append(make_node('<br />', "wn"))
+    fnode.append(make_node(node["indicator"], "indicator"))
+    fnode.append(make_node(node["word"], "lex"))
     if "WNSENSE" in node["roles"]:
-        G.node(get_label("wn"), label=node["roles"]["WNSENSE"])
-        G.edge(node["id"], get_label("wn"))
-    if "word" in node and node["word"]:
-        G.node(get_label("word"), label=node["word"])
-        G.edge(node["id"], get_label("word"))
-    return G
+        fnode.append(make_node('<br />', "wn"))
+        fnode.append(make_node(node["roles"].get("WNSENSE", ""), "wn"))
+    fnode.append(make_node('<br /> ', "wn"))
+    #fnode.append(make_node(")", ""))
+    #fnode.append(make_node('<br ALIGN="LEFT"/>', "wn"))
+
+    return "<%s>" % ' '.join([str(s) for s in fnode]), dict(attrs, URL=link)
+
 
 def render_node_table(node, format={}):
-    row = "<TR><TD>%s</TD><TD>%s</TD></TR>"
-    attrs = format.get("base_node", {})
-    lex = ""
-    if "word" in node:
-        lex = row % ("LEX",  node["word"])
+    return render_condensed_node_table(node, format=format)
+    attrs = get_format_key(format, "base_node")
+    t_attrs = get_format_key(format, "table")
+
+    attributes = [TR([
+        TD("lex",
+           attrs=get_format_key(t_attrs, "lex.label"),
+           font=get_format_key(t_attrs, "lex.label.font")),
+        TD(node.get("roles", {}).get("LEX") or node["word"],
+           attrs=get_format_key(t_attrs, "lex.value"),
+           font=get_format_key(t_attrs, "lex.value.font"))
+    ])]
     if "roles" in node and "WNSENSE" in node["roles"]:
-        lex += "\n    " + row % ("wn", node["roles"]["WNSENSE"])
-    lex += row % ("span", "(%d, %d)" % (node["start"], node["end"]))
-    label = """<<TABLE cellspacing="0" border="0" cellborder="1" cellpadding="0">
-    <TR><TD colspan='2'>%s</TD></TR>
-    <TR><TD>%s</TD><TD>%s</TD></TR>
-    %s
-    </TABLE>>""" % (node["id"], node["indicator"], "ONT::"+node["type"], lex)
-    return label, attrs
+        attributes.append(TR([
+            TD("wn",
+               attrs=get_format_key(t_attrs, "wn.label"),
+               font=get_format_key(t_attrs, "wn.label.font")),
+            TD(node["roles"]["WNSENSE"],
+               attrs=get_format_key(t_attrs, "wn.value"),
+               font=get_format_key(t_attrs, "wn.value.font"))
+        ]))
+    attributes.append(TR([
+        TD("span",
+               attrs=get_format_key(t_attrs, "wn.value"),
+               font=get_format_key(t_attrs, "wn.value.font")),
+        TD("(%d, %d)" % (node["start"], node["end"]),
+           attrs=get_format_key(t_attrs, "wn.value"),
+           font=get_format_key(t_attrs, "wn.value.font")
+        )
+    ]))
+    label = Table(
+        [
+            TR(
+                TD(node["id"],
+                   attrs=get_format_key(t_attrs, "id.label"),
+                   font=get_format_key(t_attrs, "id.label.font"))),
+            TR([
+                TD(node["indicator"],
+                   attrs=get_format_key(t_attrs, "indicator.label"),
+                   font=get_format_key(t_attrs, "indicator.label.font")),
+                TD(node["type"],
+                   attrs=get_format_key(t_attrs, "ont.value"),
+                   font=get_format_key(t_attrs, "ont.value.font")
+                )
+            ])
+        ] + attributes, attrs=format.get("table", {})
+    )
+    #print(str(label))
+    return "<%s>" % str(label), attrs
+
+class HTMLElement:
+    tag = None
+    def __init__(self, value, attrs=None, font=None, tag=None):
+        self.value = value
+        self.attrs = attrs
+        if not self.attrs:
+            self.attrs = {}
+        self.font = font
+        if not font:
+            self.font = {}
+
+    @property
+    def attributes(self):
+        return " " + " ".join(['%s="%s"' % (k, v) for k, v in self.attrs.items() if type(v) is str])
+
+    @property
+    def values(self):
+        if type(self.value) is list:
+            value = " ".join([str(v) for v in self.value])
+        elif isinstance(self.value, HTMLElement):
+            value = str(self.value)
+        else:
+            value = str(self.value)
+        if self.font:
+            #print(self.font)
+            return "<font %s>%s</font>" % (" ".join(['%s="%s"' % (k, v) for k, v in self.font.items() if type(v) is str]), value)
+        return value
+
+    def __str__(self):
+        fmt = "%s%s%s"
+        if self.tag:
+            open_t = "<%s%s>" % (self.tag, self.attributes)
+            close_t = "</%s>" % self.tag
+        else:
+            open_t, close_t = "", ""
+        return fmt % (open_t, self.values, close_t)
+
+class Table(HTMLElement):
+    tag = "TABLE"
+
+class TR(HTMLElement):
+    tag = "TR"
+
+class TD(HTMLElement):
+    tag = "TD"
+
+class TEXT(HTMLElement):
+    tag = ""

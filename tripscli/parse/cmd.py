@@ -29,29 +29,34 @@ def get_from_vagrant(vagrant):
 @click.option("--vagrant-home", "-v", "vagrant", default="")
 @click.option("--trips-url", "-u", "url", default="http://trips.ihmc.us/parser/cgi/step")
 @click.option("--num-parses", '-n', "num", default=1)
+@click.option("--as-xml", '-b', "as_xml", is_flag=True, help="return xml data for a parse instead")
 @click.option("--debug", "-d", "debug", default=False, type=bool)
 @click_config_file.configuration_option(implicit=False, provider=json_config_provider)
-def query(text, vagrant, url, num, debug):
+def query(text, vagrant, url, num, as_xml, debug):
     if vagrant:
         _t, url = get_from_vagrant(vagrant)
     parser = TripsParser(url=url, debug=debug)
     parser.set_parameter("number-parses-desired", num)
-    g = parser.query(text)
-
-    click.echo(json.dumps(g, indent=2))
+    if as_xml:
+        parser.output = "xml"
+        click.echo(parser.query(text))
+    else:
+        g = parser.query(text)
+        click.echo(json.dumps(g, indent=2))
 
 @click.command()
 @click.option("--parse", "-p", "parse", prompt=True)
 @click.option("--format", "-f", "format", default="svg", type=str)
+@click.option("--style", "-s", "style", default="", type=str)
 @click.option("--output", "-o", "output", prompt=True)
 @click.option("--alt", "-a", "alt", default=-1, type=int)
-def render(parse, format, output, alt):
+def render(parse, format, style, output, alt):
     res = json.load(open(parse))
     if alt > -1:
         parse = res["alternatives"][alt]
     else:
         parse = res["parse"]
-    as_dot(parse).graph().render(output, format=format)
+    as_dot(parse, format=style).graph().render(output, format=format)
 
 # to_json should handle the iterator construction
 @click.command()
