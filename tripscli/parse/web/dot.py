@@ -74,7 +74,7 @@ def as_dot(graph, format=None, label=None):
         default_node_attr=get_format_key(format, "base_node"),
         default_edge_attr=get_format_key(format, "base_edge"),
         no_escape=True,
-        attrs=dict(rankdir="TB"),
+        attrs=dict(rankdir="TB", size="6,12"),
         label=label
     )
 
@@ -106,16 +106,32 @@ def render_edges(utt, graph, format):
         if key == "root" or "roles" not in val:
             continue
         for role, target in val["roles"].items():
-            if target[0] == "#":
-                name="%s_%s" % (key, target[1:])
-                graph.edge(key, target[1:], " %s   "  % str(TEXT(role)), attrs=dict(get_format_key(format, "edge.%s" % role, "base_edge")))
+            style = dict(get_format_key(format, "edge.%s" % role, "base_edge"))
+            # FIX: if there are multiple edges with the same label coming out
+            #      labels are supposed to be encoded as a list
+            def add_edge(t):
+                if type(t) is dict:
+                    edge_style = dict(style, **t.get("style", {}))
+                    t = t.get("target")
+                else:
+                    edge_style = dict(style)
+                if t[0] == "#":
+                    name="%s_%s" % (key, t[1:])
+                    graph.edge(key, t[1:], " %s   "  % str(TEXT(role)), attrs=edge_style)
+            if type(target) is list:
+                for t in target:
+                    add_edge(t)
+            else:
+                add_edge(target)
 
+               
 def render_condensed_node_table(node, format={}):
     attrs = get_format_key(format, "base_node")
     t_attrs = get_format_key(format, "table")
-    make_node = lambda text, path: TEXT(text or "* ", attrs=get_format_key(t_attrs, path+".value"), font=get_format_key(t_attrs, path+".value.font"))
+    make_node = lambda text, path: TEXT(text or "* ", attrs=dict(get_format_key(t_attrs, path+".value")), font=dict(get_format_key(t_attrs, path+".value.font")))
     link = "http://trips.ihmc.us/lexicon/data/ONT::%s.xml" % node["type"]
     fnode = []
+    node_style = node.get("style", {})
     #fnode.append(make_node("(", ""))
     fnode.append(make_node('<br />', "wn"))
     fnode.append(make_node(node["type"], "ont"))
@@ -129,7 +145,7 @@ def render_condensed_node_table(node, format={}):
     #fnode.append(make_node(")", ""))
     #fnode.append(make_node('<br ALIGN="LEFT"/>', "wn"))
 
-    return "<%s>" % ' '.join([str(s) for s in fnode]), dict(attrs, URL=link)
+    return "<%s>" % ' '.join([str(s) for s in fnode]), dict(attrs, URL=link, **node_style)
 
 
 def render_node_table(node, format={}):

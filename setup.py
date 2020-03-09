@@ -18,7 +18,7 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
         "Operating System :: OS Independent",
-    ]
+    ],
     entry_points = {
         "console_scripts": ["trips-cli=tripscli.cmd:cli"]
     },
