@@ -16,8 +16,10 @@ setup(
         'tqdm',
         'spacy',
         'supwsd',
-        'soul',
         'pytrips'
+    ],
+    dependency_links = [
+      "git+git://github.com/mrmechko/soul.git#egg=soul"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
