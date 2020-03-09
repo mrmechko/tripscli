@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name='tripscli',
@@ -12,6 +12,11 @@ setup(
     install_requires=[
         'Click',
         'click_config_file',
+        'pandas',
+        'tqdm',
+        'spacy',
+        'supwsd',
+        'soul',
         'pytrips'
     ],
     classifiers=[
