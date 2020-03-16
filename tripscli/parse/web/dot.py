@@ -74,7 +74,7 @@ def as_dot(graph, format=None, label=None):
         default_node_attr=get_format_key(format, "base_node"),
         default_edge_attr=get_format_key(format, "base_edge"),
         no_escape=True,
-        attrs=dict(rankdir="TB", size="6,12"),
+        attrs=dict(rankdir="TB"),
         label=label
     )
 
