@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 import urllib.parse as uparse
 import urllib.request as urequest
 
@@ -57,6 +58,7 @@ def parse(parameters, url=default_step, output="json", debug=True):
             if not debug:
                 result = result[0]#{"parse": result}
             result["sentence"] = parameters["input"]
+            result["time"] = str(datetime.now())
             return result
         return result
 

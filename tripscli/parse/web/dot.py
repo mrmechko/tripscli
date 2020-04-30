@@ -64,7 +64,7 @@ def _get_format_key(format, *keys):
     return _get_format_key(format.get(keys[0], {}), *keys[1:])
 
 
-def as_dot(graph, format=None, label=None):
+def as_dot(graph, format=None, label=None, skip=None):
     """Takes a parse field from a json output, returns a graphviz graph"""
     if not format:
         format = FORMAT
@@ -87,7 +87,7 @@ def as_dot(graph, format=None, label=None):
             attrs=dict(rankdir="TB")
         )    
         render_utterance(utterance, G, format)
-        render_edges(utterance, G, format)
+        render_edges(utterance, G, format, skip)
         H.add_subgraph(G)
     return H
 
@@ -101,11 +101,13 @@ def render_utterance(utt, graph, format):
             label, attrs = render_node_table(v, format)
             graph.node(x, attrs, label)
 
-def render_edges(utt, graph, format):
+def render_edges(utt, graph, format, skip=None):
     for key, val in utt.items():
         if key == "root" or "roles" not in val:
             continue
         for role, target in val["roles"].items():
+            if skip and role in skip:
+                continue
             style = dict(get_format_key(format, "edge.%s" % role, "base_edge"))
             # FIX: if there are multiple edges with the same label coming out
             #      labels are supposed to be encoded as a list
@@ -117,14 +119,23 @@ def render_edges(utt, graph, format):
                     edge_style = dict(style)
                 if t[0] == "#":
                     name="%s_%s" % (key, t[1:])
+                    color = edge_style.get("color", "")
                     graph.edge(key, t[1:], " %s   "  % str(TEXT(role)), attrs=edge_style)
+                elif role in ["UNIT"]: # add other non-id roles here
+                    node, attrs = render_text_only_node(t, format)
+                    graph.node("%s_%s_n" % (role, key), attrs, node)
+                    graph.edge(key, "%s_%s_n" % (role, key), " %s   "  % str(TEXT(role)), attrs=edge_style)
+
             if type(target) is list:
                 for t in target:
                     add_edge(t)
             else:
                 add_edge(target)
 
-               
+def render_text_only_node(text, format={}):
+    attrs = get_format_key(format, "base_node")
+    return "<%s>" % str(TEXT(text, attrs=dict(get_format_key(attrs, "text_only.value")))), {}
+
 def render_condensed_node_table(node, format={}):
     attrs = get_format_key(format, "base_node")
     t_attrs = get_format_key(format, "table")
