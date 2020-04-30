@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='tripscli',
-    version='0.0.5',
+    version='0.0.6',
     author="Rik Bose",
     author_email="rbose@cs.rochester.edu",
     description="Various command line tools for fetching and analysing trips parses",
