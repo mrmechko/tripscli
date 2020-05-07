@@ -56,7 +56,10 @@ def parse(parameters, url=default_step, output="json", debug=True):
         if output == "json":
             result = to_json(result)
             if not debug:
-                result = result[0]#{"parse": result}
+                nr = result[0] #{"parse": result}
+                for v in result[1:]:
+                    nr["parse"] += v["parse"]
+                result = nr # uhhhhh
             result["sentence"] = parameters["input"]
             result["time"] = str(datetime.now())
             return result

@@ -90,11 +90,15 @@ class FailedToParse(ParseObject):
 def find_utts(node):
     if not node:
         return [ParseObject({})]
+    # Untested <- if utts don't get properly parsed this is probably the problem
+    terms = []
     for v in node:
         if v.tag == "utt":
-            return [Utterance(v)]
+            terms += [Utterance(v)]
         elif v.tag == "compound-communication-act":
-            return [CompoundCommunicationAct(v)]
+            terms += [CompoundCommunicationAct(v)]
+    if terms:
+        return terms
     return [FailedToParse(v)]
 
 def find_terms(stream):
